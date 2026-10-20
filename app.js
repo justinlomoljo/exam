@@ -8,7 +8,7 @@ const SUPABASE_ANON_KEY = "your-supabase-anon-key";
 const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
 // Global State
-let currentRole = "Staff"; // "Staff" or "Scholar_A01", "Scholar_A03", etc.
+let currentRole = "Staff";
 
 // 1. Mock Scholar Profiles
 const mockScholars = {
@@ -152,19 +152,14 @@ let allSubmissions = [
   }
 ];
 
-// Audit Trail Array
 const auditLogs = [
-  { timestamp: "18:40:12", action: "SYSTEM_INIT", targetId: "SYSTEM", actor: "System", details: "Initial seed dataset loaded for A01 - A06." }
+  { timestamp: new Date().toLocaleTimeString(), action: "SYSTEM_INIT", targetId: "SYSTEM", actor: "System", details: "Initial seed dataset loaded for A01 - A06." }
 ];
 
-// Initialize Application
 document.addEventListener("DOMContentLoaded", () => {
   switchRole("Staff");
 });
 
-// =================================================================
-// ROLE SWITCHER & DASHBOARD TOGGLING
-// =================================================================
 function switchRole(selectedRole) {
   currentRole = selectedRole;
   const scholarView = document.getElementById("scholarView");
@@ -181,7 +176,6 @@ function switchRole(selectedRole) {
     const scholarKey = selectedRole.replace("Scholar_", "");
     const scholar = mockScholars[scholarKey];
     
-    // Set Individual Student Profile Info
     document.getElementById("scholarName").innerText = scholar.full_name;
     document.getElementById("scholarStudentId").innerText = scholar.student_id;
     document.getElementById("scholarPolicy").innerText = scholar.program;
@@ -195,15 +189,12 @@ function switchRole(selectedRole) {
   }
 }
 
-// =================================================================
-// AUTOMATED COMPLIANCE EVALUATION ENGINE
-// =================================================================
 function evaluateCompliance(sub) {
   if (sub.verification_status !== "Verified") {
     return { status: "Pending Verification", reasons: ["Evidence not verified"] };
   }
 
-  const policy = sub.program === "Merit Scholar" ? policiesMap[8] : policiesMap[9];
+  const policy = sub.program === "Merit Scholar" ? policiesMap[1] : policiesMap[2];
   const defects = [];
 
   if (sub.is_late) defects.push("Late Submission (Passed Oct 30, 17:00 PST deadline)");
@@ -219,9 +210,6 @@ function evaluateCompliance(sub) {
   };
 }
 
-// =================================================================
-// GRADE SUBMISSION & DUPLICATE CHECK
-// =================================================================
 function handleGradeSubmission(event) {
   event.preventDefault();
   
@@ -242,7 +230,6 @@ function handleGradeSubmission(event) {
   const dropped = parseInt(document.getElementById("inputDropped").value);
   const evidence = document.getElementById("inputEvidence").value;
 
-  // Duplicate Submission Prevention (BR04)
   const isDuplicate = allSubmissions.some(
     s => s.student_id === scholar.student_id && s.academic_year === ay && s.semester === sem
   );
@@ -285,16 +272,12 @@ function handleGradeSubmission(event) {
   renderScholarPortal();
 }
 
-// =================================================================
-// RENDER INDIVIDUAL SCHOLAR PORTAL DASHBOARD
-// =================================================================
 function renderScholarPortal() {
   const scholarKey = currentRole.replace("Scholar_", "");
   const scholar = mockScholars[scholarKey];
   const tbody = document.getElementById("scholarSubmissionsTable");
   tbody.innerHTML = "";
 
-  // Filter ONLY this scholar's submissions
   const scholarSubs = allSubmissions.filter(s => s.student_id === scholar.student_id);
 
   if (scholarSubs.length === 0) {
@@ -325,14 +308,10 @@ function renderScholarPortal() {
   });
 }
 
-// =================================================================
-// RENDER STAFF DASHBOARD & SEARCH / FILTER
-// =================================================================
 function renderStaffDashboard() {
   const tbody = document.getElementById("staffSubmissionsTable");
   tbody.innerHTML = "";
 
-  // Update Metrics
   document.getElementById("metricTotal").innerText = allSubmissions.length;
   document.getElementById("metricPending").innerText = allSubmissions.filter(s => s.verification_status === "Pending Verification").length;
   document.getElementById("metricCompliant").innerText = allSubmissions.filter(s => s.compliance_status === "Compliant").length;
@@ -384,9 +363,6 @@ function filterStaffTable() {
   });
 }
 
-// =================================================================
-// STAFF VERIFICATION & RENEWAL MODAL ACTIONS
-// =================================================================
 function openVerificationModal(subId) {
   const sub = allSubmissions.find(s => s.submission_id === subId);
   if (!sub) return;
